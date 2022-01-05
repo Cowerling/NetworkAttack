@@ -1,32 +1,36 @@
 import os
-import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
+import sys
 
-from filtering import wt_filter
+from single_detect import single_detect_event
+from sequence_detect import sequence_detect_event
+from monitor import MonitorValue
 
+root_dir = r'./data'
 
-root_dir = 'data'
-file_name = '攻击数据.xlsx'
-file_path = os.path.join(root_dir, file_name)
+normal_data_file = os.path.join(root_dir, '正常数据.csv')
+sample_data_file = os.path.join(root_dir, '样本数据.csv')
 
-df = pd.read_excel(file_path)
-data = df.iloc[:, 13].to_numpy()[1:].tolist()
-datarec = wt_filter(data, 10)
-# Create wavelet object and define parameters
+estimate_data_file = os.path.join(root_dir, '攻击数据.csv')
 
+interval = 24
+outliers_count = 5
+threshold = 0.2
+moment_length = 5
+label_value = 1
+list_min_size = 2
+k1 = 0.85
+k2 = 0.85
+repair_size = 20
+rollback = moment_length - 1
+under_mean_threshold = 0.2
+k3 = 0.7
 
-index = [x for x in range(0, len(data))]
-
-plt.subplot(2, 1, 1)
-plt.plot(index, data)
-plt.xlabel('time (s)')
-plt.ylabel('microvolts (uV)')
-plt.title("Raw signal")
-plt.subplot(2, 1, 2)
-plt.plot(index, wt_filter(data, 0.04))
-plt.xlabel('time (s)')
-plt.ylabel('microvolts (uV)')
-plt.title("De-noised signal using wavelet techniques")
-
-plt.tight_layout()
-plt.show()
+single_detect_monitor_result, single_detect_mean_result = single_detect_event(sample_data_file,
+                                                                              normal_data_file,
+                                                                              estimate_data_file,
+                                                                              interval, outliers_count, threshold, 3)
+sequence_detect_day_result, sequence_detect_monitor_result, labels = sequence_detect_event(normal_data_file,
+                                                                                           estimate_data_file,
+                                                                                           interval, True, moment_length, 1)
+print()
